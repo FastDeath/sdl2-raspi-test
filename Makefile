@@ -24,7 +24,7 @@ GOARM := 6
 
 all: gosdl-arm gosdl-local
 
-gosdl-arm:
+gosdl-arm: *.go
 	env \
 	CGO_ENABLED="1" \
 	CXX=$(CXX) \
@@ -37,7 +37,7 @@ gosdl-arm:
 	$(GOBUILD) -x -o gosdl-$(GOOS)-$(GOARCH)$(GOARM)
 
 
-gosdl-local:
+gosdl-local: *.go
 	$(GOBUILD) -x -o gosdl-local
 
 clean:
