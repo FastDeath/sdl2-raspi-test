@@ -1,0 +1,11 @@
+modprobe fbtft_device name=list
+
+modprobe fbtft_device name=m31s1322 gpios=reset:24,dc:25 speed=5000000
+modprobe fbtft_device name=adafruit13m debug=1 speed=2000000 gpios=reset:24,dc:23
+modprobe fbtft_device name=m31s1322 debug=1 speed=2000000 gpios=reset:24,dc:25
+
+modprobe fbtft_device name=m31s1322 speed=32000000 gpios=reset:24,dc:25 debug=7 verbose=5
+
+modprobe spi_bcm2835
+modprobe fbtft_device name=m31s1322 speed=20000000 gpios=reset:24,dc:25 fps=60
+modprobe fb_ssd1322

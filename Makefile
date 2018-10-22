@@ -2,9 +2,11 @@ GOBUILD = go build
 
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 # TC_PATH := $(ROOT_DIR)/toolchain
-TC_PATH := /home/sk/buildroot/buildroot-rpi1/output/host
+# TC_PATH := /home/sk/buildroot/buildroot-rpi1-oled/output/host
+TC_PATH := /home/sk/buildroot/buildroot-2018.08.1/output/host/
 
 TC_PREFIX := arm-buildroot-linux-uclibcgnueabihf
+# TC_PREFIX := arm-buildroot-linux-gnueabihf
 CC := ${TC_PREFIX}-gcc
 LD := ${TC_PREFIX}-ld
 AS := ${TC_PREFIX}-as

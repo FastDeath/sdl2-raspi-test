@@ -16,6 +16,7 @@ func main() {
 	}
 	defer sdl.Quit()
 	sdl.LogSetAllPriority(sdl.LOG_PRIORITY_INFO)
+	// sdl.LogSetAllPriority(sdl.LOG_PRIORITY_VERBOSE)
 
 	if err := ttf.Init(); err != nil {
 		log.Panic(err)
@@ -116,7 +117,7 @@ func main() {
 
 		if sampleDuration > 100 {
 			fps = frameNum * 1000 / sampleDuration
-			log.Printf("frameNum: %d\tsampleDuration: %d\tfps: %d", frameNum, sampleDuration, fps)
+			// log.Printf("frameNum: %d\tsampleDuration: %d\tfps: %d", frameNum, sampleDuration, fps)
 
 			lastTicks = sdl.GetTicks()
 			frameNum = 0
