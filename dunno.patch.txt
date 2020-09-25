@@ -1,0 +1,389 @@
++/*
++ * FB driver for the SSD1322 OLED Controller
++ *
++ * Copyright (C) 2013 Ryan Press
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/device.h>
++#include <linux/init.h>
++#include <linux/gpio.h>
++#include <linux/spi/spi.h>
++#include <linux/delay.h>
++
++#include "fbtft.h"
++
++#define DRVNAME "fb_ssd1322"
++#define WIDTH 256
++#define HEIGHT 64
++#define GAMMA_NUM 1
++#define GAMMA_LEN 15
++#define DEFAULT_GAMMA "7 1 1 1 1 2 2 3 3 4 4 5 5 6 6"
++
++/*
++
++https://github.com/olikraus/u8g2/blob/master/csrc/u8x8_d_ssd1322.c
++
++static const uint8_t u8x8_d_ssd1322_256x64_init_seq[] = {
++    
++  U8X8_DLY(1),
++  U8X8_START_TRANSFER(),             	// enable chip, delay is part of the transfer start
++  U8X8_DLY(1),
++  
++  U8X8_CA(0xfd, 0x12),            	// unlock
++  U8X8_C(0xae),		                // display off
++  U8X8_CA(0xb3, 0x91),			// set display clock divide ratio/oscillator frequency (set clock as 80 frames/sec)  *
++  U8X8_CA(0xca, 0x3f),			// multiplex ratio 1/64 Duty (0x0F~0x3F) *
++  U8X8_CA(0xa2, 0x00),			// display offset, shift mapping ram counter *
++  U8X8_CA(0xa1, 0x00),			// display start line *
++  //U8X8_CAA(0xa0, 0x14, 0x11),	// Set Re-Map / Dual COM Line Mode *
++  U8X8_CAA(0xa0, 0x06, 0x011),	// Set Re-Map / Dual COM Line Mode *
++  U8X8_CA(0xab, 0x01),			// Enable Internal VDD Regulator *
++  U8X8_CAA(0xb4, 0xa0, 0x005|0x0fd),	// Display Enhancement A *
++  U8X8_CA(0xc1, 0x9f),			// contrast *
++  U8X8_CA(0xc7, 0x0f),			// Set Scale Factor of Segment Output Current Control *
++  U8X8_C(0xb9),		                // linear grayscale
++  U8X8_CA(0xb1, 0xe2),			// Phase 1 (Reset) & Phase 2 (Pre-Charge) Period Adjustment *
++  U8X8_CAA(0xd1, 0x082|0x020, 0x020),	// Display Enhancement B *
++  U8X8_CA(0xbb, 0x1f),			// precharge  voltage *
++  U8X8_CA(0xb6, 0x08),			// precharge  period *
++  U8X8_CA(0xbe, 0x07),			// vcomh *
++  U8X8_C(0xa6),		                // normal display
++  U8X8_C(0xa9),		                // exit partial display
++
++
++  U8X8_DLY(1),					// delay 2ms
++
++  
++  U8X8_END_TRANSFER(),             	// disable chip
++  U8X8_END()             			// end of sequence
++};
++
++
++*/
++#ifdef XXX
++int init[] = {						/* Initialization for LM560G-256064 5.6" OLED display */
++			  -1, 0xFD, 0x12,		/* Unlock OLED driver IC */
++			  -1, 0xAE,				/* Display OFF (blank) */
++			  -1, 0xB3, 0xF3,		/* Display divide clockratio/frequency */
++			  -1, 0xCA, 0x3F,		/* Multiplex ratio, 1/64, 64 COMS enabled */
++			  -1, 0xA2, 0x00,		/* Set offset, the display map starting line is COM0 */
++			  -1, 0xA1, 0x00,		/* Set start line position */
++			  -1, 0xA0, 0x14, 0x11, /* Set remap, horiz address increment, disable colum address remap, */
++			  /*  enable nibble remap, scan from com[N-1] to COM0, disable COM split odd even */
++			  -1, 0xAB, 0x01,		/* Select external VDD */
++			  -1, 0xB4, 0xA0, 0xFD, /* Display enhancement A, external VSL, enhanced low GS display quality */
++			  -1, 0xC1, 0xFF,		/* Contrast current, 256 steps, default is 0x7F */
++			  -1, 0xC7, 0x0F,		/* Master contrast current, 16 steps, default is 0x0F */
++			  -1, 0xB1, 0xF0,		/* Phase Length */
++			  -1, 0xD1, 0x82, 0x20  /* Display enhancement B */
++								  - 1,
++			  0xBB, 0x0D,	 /* Pre-charge voltage */
++			  -1, 0xBE, 0x00, /* Set VCOMH */
++			  -1, 0xA6,		  /* Normal display */
++			  -1, 0xAF,		  /* Display ON */
++			  -3};
++#endif
++
++/* Init sequence */
++static int init_display(struct fbtft_par *par)
++{
++	par->fbtftops.reset(par);
++
++	/* Initialization for LM560G-256064 5.6" OLED display */
++
++	/* Unlock OLED driver IC */
++	write_reg(par, 0xFD);
++	write_reg(par, 0x12);
++
++	/* Display OFF (blank) */
++	write_reg(par, 0xAE);
++
++	/* Display divide clockratio/frequency */
++	write_reg(par, 0xB3);
++	write_reg(par, 0xF3);
++
++	/* Multiplex ratio, 1/64, 64 COMS enabled */
++	write_reg(par, 0xCA);
++	write_reg(par, 0x3F);
++
++	/* Set offset, the display map starting line is COM0 */
++	write_reg(par, 0xA2);
++	write_reg(par, 0x00);
++
++	/* Set start line position */
++	write_reg(par, 0xA1);
++	write_reg(par, 0x00);
++
++	/* Set remap, horiz address increment, disable colum address remap, */
++	write_reg(par, 0xA0);
++	write_reg(par, 0x14);
++	write_reg(par, 0x11);
++
++	/* Select external VDD */
++	write_reg(par, 0xAB);
++	write_reg(par, 0x01);
++
++	/* Display enhancement A, external VSL, enhanced low GS display quality */
++	write_reg(par, 0xB4);
++	write_reg(par, 0xA0);
++	write_reg(par, 0xFD);
++
++	/* Contrast current, 256 steps, default is 0x7F */
++	write_reg(par, 0xC1);
++	write_reg(par, 0xFF);
++
++	/* Master contrast current, 16 steps, default is 0x0F */
++	write_reg(par, 0xC7);
++	write_reg(par, 0x0F);
++
++	/* Phase Length */
++	write_reg(par, 0xB1);
++	write_reg(par, 0xF0);
++
++	/* Display enhancement B */
++	write_reg(par, 0xD1);
++	write_reg(par, 0x82);
++	write_reg(par, 0x20 - 1);
++
++	/* Pre-charge voltage */
++	write_reg(par, 0xBB);
++	write_reg(par, 0x0D);
++
++	/* Set VCOMH */
++	write_reg(par, 0xBE);
++	write_reg(par, 0x00);
++
++	/* Normal display */
++	write_reg(par, 0xA6);
++
++	/* Display ON */
++	write_reg(par, 0xAF);
++
++#ifdef XXX
++	/* Set Display OFF */
++	write_reg(par, 0xAE);
++
++	/* Set Display Clock Divide Ratio/ Oscillator Frequency */
++	write_reg(par, 0xD5);
++	write_reg(par, 0x80);
++
++	/* Set Multiplex Ratio */
++	write_reg(par, 0xA8);
++	if (par->info->var.yres == 64)
++		write_reg(par, 0x3F);
++	else if (par->info->var.yres == 48)
++		write_reg(par, 0x2F);
++	else
++		write_reg(par, 0x1F);
++
++	/* Set Display Offset */
++	write_reg(par, 0xD3);
++	write_reg(par, 0x0);
++
++	/* Set Display Start Line */
++	write_reg(par, 0x40 | 0x0);
++
++	/* Charge Pump Setting */
++	write_reg(par, 0x8D);
++	/* A[2] = 1b, Enable charge pump during display on */
++	write_reg(par, 0x14);
++
++	/* Set Memory Addressing Mode */
++	write_reg(par, 0x20);
++	/* Vertical addressing mode  */
++	write_reg(par, 0x01);
++
++	/* Set Segment Re-map */
++	/* column address 127 is mapped to SEG0 */
++	write_reg(par, 0xA0 | 0x1);
++
++	/* Set COM Output Scan Direction */
++	/* remapped mode. Scan from COM[N-1] to COM0 */
++	write_reg(par, 0xC8);
++
++	/* Set COM Pins Hardware Configuration */
++	write_reg(par, 0xDA);
++	if (par->info->var.yres == 64)
++		/* A[4]=1b, Alternative COM pin configuration */
++		write_reg(par, 0x12);
++	else if (par->info->var.yres == 48)
++		/* A[4]=1b, Alternative COM pin configuration */
++		write_reg(par, 0x12);
++	else
++		/* A[4]=0b, Sequential COM pin configuration */
++		write_reg(par, 0x02);
++
++	/* Set Pre-charge Period */
++	write_reg(par, 0xD9);
++	write_reg(par, 0xF1);
++
++	/* Set VCOMH Deselect Level */
++	write_reg(par, 0xDB);
++	/* according to the datasheet, this value is out of bounds */
++	write_reg(par, 0x40);
++
++	/* Entire Display ON */
++	/* Resume to RAM content display. Output follows RAM content */
++	write_reg(par, 0xA4);
++
++	/* Set Normal Display
++	 * 0 in RAM: OFF in display panel
++	 * 1 in RAM: ON in display panel
++	 */
++	write_reg(par, 0xA6);
++
++	/* Set Display ON */
++	write_reg(par, 0xAF);
++#endif
++
++	return 0;
++}
++
++static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
++{
++	int width = par->info->var.xres;
++	int offset = (480 - width) / 8;
++
++	fbtft_par_dbg(DEBUG_SET_ADDR_WIN, par, "%s(xs=%d, ys=%d, xe=%d, ye=%d)\n", __func__, xs, ys, xe, ye);
++
++	write_reg(par, 0x15, offset, offset + (width / 4) - 1);
++	write_reg(par, 0x75, ys, ye);
++	write_reg(par, 0x5c);
++}
++
++/*
++	Grayscale Lookup Table
++	GS1 - GS15
++	The "Gamma curve" contains the relative values between the entries in the Lookup table.
++
++	0 = Setting of GS1 < Setting of GS2 < Setting of GS3..... < Setting of GS14 < Setting of GS15
++
++*/
++// static int set_gamma(struct fbtft_par *par, unsigned long *curves)
++static int set_gamma(struct fbtft_par *par, u32 *curves)
++{
++	unsigned long tmp[GAMMA_LEN * GAMMA_NUM];
++	int i, acc = 0;
++
++	fbtft_par_dbg(DEBUG_INIT_DISPLAY, par, "%s()\n", __func__);
++
++	for (i = 0; i < GAMMA_LEN; i++)
++	{
++		if (i > 0 && curves[i] < 1)
++		{
++			dev_err(par->info->device,
++					"Illegal value in Grayscale Lookup Table at index %d. "
++					"Must be greater than 0\n",
++					i);
++			return -EINVAL;
++		}
++		acc += curves[i];
++		tmp[i] = acc;
++		if (acc > 180)
++		{
++			dev_err(par->info->device,
++					"Illegal value(s) in Grayscale Lookup Table. "
++					"At index=%d, the accumulated value has exceeded 180\n",
++					i);
++			return -EINVAL;
++		}
++	}
++
++	write_reg(par, 0xB8,
++			  tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7],
++			  tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14]);
++
++	return 0;
++}
++
++static int blank(struct fbtft_par *par, bool on)
++{
++	fbtft_par_dbg(DEBUG_BLANK, par, "%s(blank=%s)\n", __func__, on ? "true" : "false");
++	if (on)
++		write_reg(par, 0xAE);
++	else
++		write_reg(par, 0xAF);
++	return 0;
++}
++
++#define CYR 613 /* 2.392 */
++#define CYG 601 /* 2.348 */
++#define CYB 233 /* 0.912 */
++
++static unsigned int rgb565_to_y(unsigned int rgb)
++{
++	rgb = cpu_to_le16(rgb);
++	return CYR * (rgb >> 11) + CYG * (rgb >> 5 & 0x3F) + CYB * (rgb & 0x1F);
++}
++
++static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
++{
++	u16 *vmem16 = (u16 *)(par->info->screen_base);
++	u8 *buf = par->txbuf.buf;
++	int y, x, bl_height, bl_width;
++	int ret = 0;
++
++	/* Set data line beforehand */
++	gpio_set_value(par->gpio.dc, 1);
++
++	/* convert offset to word index from byte index */
++	offset /= 2;
++	bl_width = par->info->var.xres;
++	bl_height = len / par->info->fix.line_length;
++
++	fbtft_par_dbg(DEBUG_WRITE_VMEM, par,
++				  "%s(offset=0x%x bl_width=%d bl_height=%d)\n", __func__, offset, bl_width, bl_height);
++
++	for (y = 0; y < bl_height; y++)
++	{
++		for (x = 0; x < bl_width / 2; x++)
++		{
++			*buf = cpu_to_le16(rgb565_to_y(vmem16[offset++])) >> 8 & 0xF0;
++			*buf++ |= cpu_to_le16(rgb565_to_y(vmem16[offset++])) >> 12;
++		}
++	}
++
++	/* Write data */
++	ret = par->fbtftops.write(par, par->txbuf.buf, bl_width / 2 * bl_height);
++	if (ret < 0)
++		dev_err(par->info->device, "%s: write failed and returned: %d\n", __func__, ret);
++
++	return ret;
++}
++
++static struct fbtft_display display = {
++	.regwidth = 8,
++	.width = WIDTH,
++	.height = HEIGHT,
++	.txbuflen = WIDTH * HEIGHT / 2,
++	.gamma_num = GAMMA_NUM,
++	.gamma_len = GAMMA_LEN,
++	.gamma = DEFAULT_GAMMA,
++	.fbtftops = {
++		.write_vmem = write_vmem,
++		.init_display = init_display,
++		.set_addr_win = set_addr_win,
++		.blank = blank,
++		.set_gamma = set_gamma,
++	},
++};
++FBTFT_REGISTER_DRIVER(DRVNAME, "solomon,ssd1322", &display);
++
++MODULE_ALIAS("spi:" DRVNAME);
++MODULE_ALIAS("platform:" DRVNAME);
++
++MODULE_DESCRIPTION("SSD1322 OLED Driver");
++MODULE_AUTHOR("Ryan Press");
++MODULE_LICENSE("GPL");

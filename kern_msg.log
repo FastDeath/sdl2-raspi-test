@@ -1,0 +1,116 @@
+Jan  1 00:00:29 buildroot kern.warn kernel: [   29.220160] fbtft: module is from the staging directory, the quality is unknown, you have been warned.
+Jan  1 00:00:29 buildroot kern.warn kernel: [   29.251105] fbtft_device: module is from the staging directory, the quality is unknown, you have been warned.
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.276000] spi spi0.0: spidev spi0.0 125000kHz 8 bits mode=0x00
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.294795] spi spi0.1: spidev spi0.1 125000kHz 8 bits mode=0x00
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.313268] bcm2708_fb soc:fb: soc:fb id=-1 pdata? no
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.330748] spi spi0.0: Deleting spi0.0
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.349329] fbtft_device: GPIOS used by 'm31s1322':
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.366523] fbtft_device: 'reset' = GPIO24
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.382892] fbtft_device: 'dc' = GPIO25
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.398911] spi spi0.1: spidev spi0.1 125000kHz 8 bits mode=0x00
+Jan  1 00:00:29 buildroot kern.info kernel: [   29.417147] spi spi0.0: fb_ssd1322 spi0.0 2000kHz 8 bits mode=0x00
+Jan  1 00:00:35 buildroot kern.warn kernel: [   35.676559] fb_ssd1322: module is from the staging directory, the quality is unknown, you have been warned.
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.700293] fb_ssd1322 spi0.0: fbtft_gamma_parse_str() str=
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.718298] fb_ssd1322 spi0.0: 7 1 1 1 1 2 2 3 3 4 4 5 5 6 6
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.737859] fb_ssd1322 spi0.0: fbtft_request_gpios_match('reset')
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.756424] fb_ssd1322 spi0.0: fbtft_request_gpios: 'reset' = GPIO24
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.774911] fb_ssd1322 spi0.0: fbtft_request_gpios_match('dc')
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.794232] fb_ssd1322 spi0.0: fbtft_request_gpios: 'dc' = GPIO25
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.812699] fb_ssd1322 spi0.0: fbtft_verify_gpios()
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.829700] fb_ssd1322 spi0.0: init_display() initializing...
+Jan  1 00:00:35 buildroot kern.info kernel: [   35.847500] fb_ssd1322 spi0.0: fbtft_reset()
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.002809] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: fd
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.020036] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): fd
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.038491] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 12
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.055550] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 12
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.073551] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: ae
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.090196] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): ae
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.107820] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b3
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.124176] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b3
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.141491] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 91
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.157679] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 91
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.175916] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: ca
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.191923] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): ca
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.208936] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 3f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.224916] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 3f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.241895] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.257681] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.274492] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 00
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.290072] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 00
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.306775] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.322168] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.338514] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 00
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.353785] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 00
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.369799] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a0
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.384555] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a0
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.400087] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 06
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.414401] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 06
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.429501] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 11
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.443323] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 11
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.458220] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: ab
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.471805] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): ab
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.486391] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 01
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.499571] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 01
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.513833] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b4
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.526667] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b4
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.540410] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a0
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.552918] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a0
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.566337] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: fd
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.578781] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): fd
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.592192] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: c1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.604412] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): c1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.617553] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 9f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.629570] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 9f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.642673] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: c7
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.654312] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): c7
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.667019] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 0f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.678653] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 0f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.691254] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b9
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.702782] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b9
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.715251] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.726778] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.739298] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: e2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.750526] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): e2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.762878] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: d1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.773836] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): d1
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.785670] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.796549] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a2
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.808541] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 20
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.819273] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 20
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.831166] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: bb
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.842042] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): bb
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.853768] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 1f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.864652] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 1f
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.876471] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b6
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.887165] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b6
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.898857] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 08
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.909555] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 08
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.921287] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: be
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.931909] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): be
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.943788] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 07
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.954547] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 07
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.966370] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a6
+Jan  1 00:00:36 buildroot kern.info kernel: [   36.977180] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a6
+Jan  1 00:00:37 buildroot kern.info kernel: [   36.989031] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: a9
+Jan  1 00:00:37 buildroot kern.info kernel: [   36.999668] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): a9
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.011821] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: af
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.022762] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): af
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.034484] fb_ssd1322 spi0.0: fbtft_update_display(start_line=0, end_line=63)
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.047286] fb_ssd1322 spi0.0: set_addr_win(xs=0, ys=0, xe=255, ye=63)
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.059328] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 15 1c 5b
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.070681] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 15
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.083261] fb_ssd1322 spi0.0: fbtft_write_spi(len=2): 1c 5b
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.094766] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 75 00 3f
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.106184] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 75
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.118261] fb_ssd1322 spi0.0: fbtft_write_spi(len=2): 00 3f
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.129789] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: 5c
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.140690] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): 5c
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.152954] fb_ssd1322 spi0.0: write_vmem(offset=0x0 bl_width=256 bl_height=64)
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.166845] fb_ssd1322 spi0.0: fbtft_write_spi(len=8192): 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.221862] fb_ssd1322 spi0.0: Display update: 169 kB/s, fps=0
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.233834] fb_ssd1322 spi0.0: set_gamma()
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.244084] fb_ssd1322 spi0.0: fbtft_write_reg8_bus8: b8 07 08 09 0a 0b 0d 0f 12 15 19 1d 22 27 2d 33
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.259790] fb_ssd1322 spi0.0: fbtft_write_spi(len=1): b8
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.273197] fb_ssd1322 spi0.0: fbtft_write_spi(len=15): 07 08 09 0a 0b 0d 0f 12 15 19 1d 22 27 2d 33
+Jan  1 00:00:37 buildroot kern.info kernel: [   37.290095] graphics fb1: fb_ssd1322 frame buffer, 256x64, 32 KiB video memory, 8 KiB buffer memory, fps=20, spi0.0 at 2 MHz
+# 

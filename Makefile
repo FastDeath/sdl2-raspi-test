@@ -17,6 +17,7 @@ SDL2_LDFLAGS = `sdl2-config --libs`
 
 export PATH := $(TC_PATH)/bin:$(TC_PATH)/$(TC_PREFIX)/sysroot/usr/bin:$(PATH)
 
+DEPLOY_HOST := root@192.168.178.96
 GOOS := linux
 GOARCH := arm
 GOARM := 6
@@ -54,3 +55,9 @@ test:
 	# echo -----------
 	echo $(SDL2_CFLAGS)
 	echo $(SDL2_LDFLAGS)
+
+deploy: gosdl-arm
+	# rsync -h -v -r -P -t gosdl-linux-arm6 root@192.168.178.96:/root/
+	ssh $(DEPLOY_HOST) /etc/init.d/S03app stop
+	scp gosdl-linux-arm6 marken.ttf db.png $(DEPLOY_HOST):/root/
+	ssh $(DEPLOY_HOST) /etc/init.d/S03app start
