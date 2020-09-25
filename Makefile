@@ -12,6 +12,8 @@ LD := ${TC_PREFIX}-ld
 AS := ${TC_PREFIX}-as
 CXX := ${TC_PREFIX}-g++
 
+export PKG_CONFIG_PATH := $(TC_PATH)/$(TC_PREFIX)/sysroot/usr/lib/pkgconfig:$(PKG_CONFIG_PATH)
+
 SDL2_CFLAGS = `sdl2-config --cflags`
 SDL2_LDFLAGS = `sdl2-config --libs`
 
@@ -37,10 +39,12 @@ gosdl-arm: *.go
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
 	GOARM=$(GOARM) \
-	$(GOBUILD) -x -o gosdl-$(GOOS)-$(GOARCH)$(GOARM)
+	$(GOBUILD) -tags egl -x -o gosdl-$(GOOS)-$(GOARCH)$(GOARM)
 
 
 gosdl-local: *.go
+	env \
+	CGO_ENABLED=1 \
 	$(GOBUILD) -x -o gosdl-local
 
 clean:
@@ -61,3 +65,8 @@ deploy: gosdl-arm
 	ssh $(DEPLOY_HOST) /etc/init.d/S03app stop
 	scp gosdl-linux-arm6 marken.ttf db.png $(DEPLOY_HOST):/root/
 	ssh $(DEPLOY_HOST) /etc/init.d/S03app start
+
+remote: gosdl-arm
+	ssh $(DEPLOY_HOST) killall gosdl-linux-arm6 || true
+	scp gosdl-linux-arm6 marken.ttf db.png $(DEPLOY_HOST):/root/
+	ssh $(DEPLOY_HOST) /root/gosdl-linux-arm6
