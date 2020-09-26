@@ -94,8 +94,13 @@ func main() {
 
 	var shader = initShader()
 	var verticesVBO, elementsHandle = initPaint(io, &shader)
+	fpsinit()
 
 	log.Println("painting...")
+
+	var values = make([]float32, 32)
+	// var rnd = rand.New(rand.NewSource(0))
+	var offs int
 
 	running := true
 	for running {
@@ -115,6 +120,7 @@ func main() {
 				break
 			}
 		}
+		fpsthink()
 		imgui.NewFrame()
 
 		imgui.SetNextWindowPos(imgui.Vec2{0, 0})
@@ -125,7 +131,7 @@ func main() {
 		// imgui.LabelText("Hello", "World")
 		SomeValue = float32(sdl.GetTicks()) / 1000
 
-		imgui.ColumnsV(4, "Label", true)
+		imgui.ColumnsV(3, "Label", true)
 
 		imgui.DragFloatV("1.", &SomeValue, 10, 0, 100, "%.2fV", 1)
 		imgui.DragFloatV("2.", &SomeValue, 10, 0, 100, "%.2fV", 1)
@@ -135,6 +141,21 @@ func main() {
 
 		imgui.DragFloatV("Floaty", &SomeValue, 10, 0, 100, "%.3f", 1)
 		imgui.DragFloatV("Some value", &SomeValue, 10, 0, 100, "%.3f", 1)
+
+		imgui.NextColumn()
+
+		var newOffs = int(sdl.GetTicks()/100) % len(values)
+		if newOffs != offs {
+			offs = newOffs
+			// values[offs] = (rnd.Float32() + values[(len(values)+offs-1)%len(values)]) / 2
+			values[offs] = framespersecond
+		}
+
+		var overlay = fmt.Sprintf("%.f", framespersecond)
+
+		// imgui.PlotLines("Line", []float32{1, 2, 4, 6, 7, 8, 10, 5, 7, 6, 12, 1, 2, 4, 2, 10})
+		imgui.PlotLinesV("FPS", values, offs+1, overlay, 0, 110, imgui.Vec2{X: 64, Y: 48})
+		// imgui.PlotHistogramV("Line", []float32{1, 2, 4, 6, 7, 8, 10, 5, 7, 6, 12, 1, 2, 4, 2, 10}, 0, "Ovl", 0, 15, imgui.Vec2{X: 64, Y: 40})
 
 		imgui.End()
 		imgui.Render()
@@ -285,6 +306,75 @@ func initPaint(io imgui.IO, shader *ShaderProps) (verticesVBO, elementsHandle ui
 	return
 }
 
+const FrameValues = 10
+
+// An array to store frame times:
+var (
+	frametimes      [FrameValues]uint32
+	frametimelast   uint32
+	framecount      int
+	framespersecond float32
+)
+
+func fpsinit() {
+
+	// Set all frame times to 0ms.
+	for i := 0; i < FrameValues; i++ {
+		frametimes[i] = 0
+	}
+
+	framecount = 0
+	framespersecond = 0
+	frametimelast = sdl.GetTicks()
+}
+
+func fpsthink() {
+	// frametimesindex is the position in the array. It ranges from 0 to FRAME_VALUES.
+	// This value rotates back to 0 after it hits FRAME_VALUES.
+	var frametimesindex = framecount % FrameValues
+
+	// store the current time
+	var getticks = sdl.GetTicks()
+
+	// save the frame time value
+	frametimes[frametimesindex] = getticks - frametimelast
+
+	// save the last frame time for the next fpsthink
+	frametimelast = getticks
+
+	// increment the frame count
+	framecount++
+
+	// Work out the current framerate
+
+	// The code below could be moved into another function if you don't need the value every frame.
+
+	// I've included a test to see if the whole array has been written to or not. This will stop
+	// strange values on the first few (FRAME_VALUES) frames.
+	var count int
+	if framecount < FrameValues {
+
+		count = framecount
+
+	} else {
+
+		count = FrameValues
+
+	}
+
+	// add up all the values and divide to get the average frame time.
+	framespersecond = 0
+	for i := 0; i < count; i++ {
+		framespersecond += float32(frametimes[i])
+	}
+
+	framespersecond /= float32(count)
+
+	// now to make it an actual frames per second value...
+	framespersecond = 1000.0 / framespersecond
+
+}
+
 func paint(verticesVBO, elementsHandle uint32, shader *ShaderProps) {
 	// gl.Viewport(0, 0, 256, 64)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -360,8 +450,8 @@ func paint(verticesVBO, elementsHandle uint32, shader *ShaderProps) {
 		}
 	}
 
-	gl.Flush()
-	gl.Finish()
+	// gl.Flush()
+	// gl.Finish()
 }
 
 // // PreRender clears the framebuffer.
