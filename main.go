@@ -98,10 +98,6 @@ func main() {
 
 	log.Println("painting...")
 
-	var values = make([]float32, 32)
-	// var rnd = rand.New(rand.NewSource(0))
-	var offs int
-
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -144,17 +140,14 @@ func main() {
 
 		imgui.NextColumn()
 
-		var newOffs = int(sdl.GetTicks()/100) % len(values)
-		if newOffs != offs {
-			offs = newOffs
-			// values[offs] = (rnd.Float32() + values[(len(values)+offs-1)%len(values)]) / 2
-			values[offs] = framespersecond
-		}
-
-		var overlay = fmt.Sprintf("%.f", framespersecond)
-
+		var label = fmt.Sprintf("%.f\nFPS", framespersecond)
+		var overlay = fmt.Sprintf("%dms", frametimes[(FrameValues+framecount-1)%FrameValues])
 		// imgui.PlotLines("Line", []float32{1, 2, 4, 6, 7, 8, 10, 5, 7, 6, 12, 1, 2, 4, 2, 10})
-		imgui.PlotLinesV("FPS", values, offs+1, overlay, 0, 110, imgui.Vec2{X: 64, Y: 48})
+		imgui.PlotLinesV(label, fpsgraph[:], graphidx, overlay, 0, 100, imgui.Vec2{X: 64, Y: 48})
+
+		// imgui.PlotHistogramV(label, fpsgraph[:], 0, overlay, 0, 100, imgui.Vec2{X: 64, Y: 24})
+
+		// imgui.PlotHistogramV("Bat", []float32{10, 1, 9, 2, 8, 3, 7, 4, 6, 5, 6, 4, 7, 3, 8, 2, 9, 1, 10}, 0, "3.6V", 0, 18, imgui.Vec2{X: 19*3 + 8, Y: 24})
 		// imgui.PlotHistogramV("Line", []float32{1, 2, 4, 6, 7, 8, 10, 5, 7, 6, 12, 1, 2, 4, 2, 10}, 0, "Ovl", 0, 15, imgui.Vec2{X: 64, Y: 40})
 
 		imgui.End()
@@ -307,6 +300,7 @@ func initPaint(io imgui.IO, shader *ShaderProps) (verticesVBO, elementsHandle ui
 }
 
 const FrameValues = 10
+const GraphValues = 32
 
 // An array to store frame times:
 var (
@@ -314,6 +308,8 @@ var (
 	frametimelast   uint32
 	framecount      int
 	framespersecond float32
+	fpsgraph        [GraphValues]float32
+	graphidx        int
 )
 
 func fpsinit() {
@@ -372,7 +368,12 @@ func fpsthink() {
 
 	// now to make it an actual frames per second value...
 	framespersecond = 1000.0 / framespersecond
+	fpsgraph[graphidx] = framespersecond
 
+	graphidx++
+	if graphidx >= GraphValues {
+		graphidx = 0
+	}
 }
 
 func paint(verticesVBO, elementsHandle uint32, shader *ShaderProps) {
