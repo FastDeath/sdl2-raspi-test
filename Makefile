@@ -68,5 +68,5 @@ deploy: gosdl-arm
 
 remote: gosdl-arm
 	ssh $(DEPLOY_HOST) killall gosdl-linux-arm6 || true
-	scp gosdl-linux-arm6 marken.ttf db.png $(DEPLOY_HOST):/root/
+	scp gosdl-linux-arm6 marken.ttf ProggyTiny.ttf db.png $(DEPLOY_HOST):/root/
 	ssh $(DEPLOY_HOST) /root/gosdl-linux-arm6

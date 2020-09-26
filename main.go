@@ -17,6 +17,8 @@ import (
 
 // SDL_VIDEODRIVER=rpi ./gosdl-linux-arm6
 
+var SomeValue float32 = 13
+
 func main() {
 	os.Chdir("/root")
 
@@ -26,7 +28,9 @@ func main() {
 
 	io := imgui.CurrentIO()
 	io.SetDisplaySize(imgui.Vec2{X: 256, Y: 64})
-	// io.Fonts().AddFontFromFileTTF("marken.ttf", 8)
+	io.Fonts().AddFontFromFileTTF("ProggyTiny.ttf", 10)
+	io.Fonts().BuildWithFreeTypeV(imgui.FreeTypeRasterizerFlagsMonochrome | imgui.FreeTypeRasterizerFlagsMonoHinting)
+	setStyle()
 	// io.Fonts().TextureDataRGBA32()
 
 	// Initialize SDL2
@@ -88,7 +92,8 @@ func main() {
 	//*******************************************************************
 	gl.Viewport(0, 0, 256, 64)
 
-	var verticesVBO = initPaint()
+	var shader = initShader()
+	var verticesVBO, elementsHandle = initPaint(io, &shader)
 
 	log.Println("painting...")
 
@@ -110,13 +115,33 @@ func main() {
 				break
 			}
 		}
-		// imgui.NewFrame()
-		// imgui.Render()
-		// drawData := imgui.RenderedDrawData()
+		imgui.NewFrame()
+
+		imgui.SetNextWindowPos(imgui.Vec2{0, 0})
+		imgui.SetNextWindowSize(imgui.Vec2{256, 64})
+
+		title := fmt.Sprintf("%v %v %v", gl.GetString(gl.VENDOR), gl.GetString(gl.RENDERER), gl.GetString(gl.VERSION))
+		imgui.Begin(title)
+		// imgui.LabelText("Hello", "World")
+		SomeValue = float32(sdl.GetTicks()) / 1000
+
+		imgui.ColumnsV(4, "Label", true)
+
+		imgui.DragFloatV("1.", &SomeValue, 10, 0, 100, "%.2fV", 1)
+		imgui.DragFloatV("2.", &SomeValue, 10, 0, 100, "%.2fV", 1)
+		imgui.DragFloatV("3.", &SomeValue, 10, 0, 100, "%.2fV", 1)
+
+		imgui.NextColumn()
+
+		imgui.DragFloatV("Floaty", &SomeValue, 10, 0, 100, "%.3f", 1)
+		imgui.DragFloatV("Some value", &SomeValue, 10, 0, 100, "%.3f", 1)
+
+		imgui.End()
+		imgui.Render()
 
 		// gl.GenBuffers()
 
-		paint(verticesVBO)
+		paint(verticesVBO, elementsHandle, &shader)
 
 		window.GLSwap()
 
@@ -124,30 +149,50 @@ func main() {
 	}
 }
 
-func makeShadeys() (shaderHandle, vertexLocation uint32) {
+// ShaderProps contains the location to shader uniforms/attributes
+type ShaderProps struct {
+	Handle   uint32
+	Uniforms struct {
+		Texture, ProjMtx int32
+	}
+	Attributes struct {
+		Position, UV, Color uint32
+	}
+}
+
+func initShader() (props ShaderProps) {
 
 	vertexSource := `
-attribute vec4 a_vertex;
-
-void main(void)
+uniform mat4 ProjMtx;
+attribute vec2 Position;
+attribute vec2 UV;
+attribute vec4 Color;
+varying vec2 Frag_UV;
+varying vec4 Frag_Color;
+void main()
 {
-	gl_Position = a_vertex;
+	Frag_UV = UV;
+	Frag_Color = Color;
+	gl_Position = ProjMtx * vec4(Position.xy,0,1);
 }
 `
 	fragmentSource := `
-precision lowp float;
-
-void main(void)
+uniform sampler2D Texture;
+varying vec2 Frag_UV;
+varying vec4 Frag_Color;
+void main()
 {
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	// gl_FragColor = Frag_Color;
+	// gl_FragColor = vec4(Frag_Color.rgb, Frag_Color.a * texture2D(Texture, Frag_UV.st).r);
+	gl_FragColor = vec4(Frag_Color.rgb, Frag_Color.a * texture2D(Texture, Frag_UV.st).a);
 }
 `
 
 	log.Println("creating shader program...")
-	shaderHandle = gl.CreateProgram()
+	props.Handle = gl.CreateProgram()
 	var vertHandle = gl.CreateShader(gl.VERTEX_SHADER)
 	var fragHandle = gl.CreateShader(gl.FRAGMENT_SHADER)
-	log.Println("shaderHandle =", shaderHandle)
+	log.Println("shaderHandle =", props.Handle)
 
 	gl.ShaderSource(vertHandle, 1, &vertexSource, nil)
 	gl.ShaderSource(fragHandle, 1, &fragmentSource, nil)
@@ -169,66 +214,152 @@ void main(void)
 	strLog = gl.GetShaderInfoLog(vertHandle, 256, &nBytes)
 	log.Println("Fragment log:", strLog)
 
-	gl.AttachShader(shaderHandle, vertHandle)
-	gl.AttachShader(shaderHandle, fragHandle)
+	gl.AttachShader(props.Handle, vertHandle)
+	gl.AttachShader(props.Handle, fragHandle)
 
-	// gl.BindAttribLocation(shaderHandle, 0, "a_vertex")
-	gl.LinkProgram(shaderHandle)
-	log.Println("is program:", gl.IsProgram(shaderHandle))
+	// gl.BindAttribLocation(props.Handle, 0, "a_vertex")
+	gl.LinkProgram(props.Handle)
+	log.Println("is program:", gl.IsProgram(props.Handle))
 
-	strLog = gl.GetProgramInfoLog(shaderHandle, 256, &nBytes)
+	strLog = gl.GetProgramInfoLog(props.Handle, 256, &nBytes)
 	log.Println("program log:", strLog)
 
-	vertexLocation = gl.GetAttribLocation(shaderHandle, "a_vertex")
-	log.Println("&a_vertex =", vertexLocation)
+	props.Uniforms.Texture = int32(gl.GetUniformLocation(props.Handle, "Texture"))
+	props.Uniforms.ProjMtx = int32(gl.GetUniformLocation(props.Handle, "ProjMtx"))
+	props.Attributes.Position = gl.GetAttribLocation(props.Handle, "Position")
+	props.Attributes.UV = gl.GetAttribLocation(props.Handle, "UV")
+	props.Attributes.Color = gl.GetAttribLocation(props.Handle, "Color")
+
+	log.Println("props.Uniforms.Texture:", props.Uniforms.Texture)
+	log.Println("props.Uniforms.ProjMtx:", props.Uniforms.ProjMtx)
+	log.Println("props.Attributes.Position:", props.Attributes.Position)
+	log.Println("props.Attributes.UV:", props.Attributes.UV)
+	log.Println("props.Attributes.Color:", props.Attributes.Color)
 	return
 }
 
-type T struct {
-	X float32
-}
-
-func initPaint() (verticesVBO uint32) {
-	var shaderHandle, vertexLocation = makeShadeys()
-
-	// var verticesVBO uint32
+func initPaint(io imgui.IO, shader *ShaderProps) (verticesVBO, elementsHandle uint32) {
 	gl.GenBuffers(1, &verticesVBO)
-	gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
 	log.Println("verticesVBO =", verticesVBO)
+	gl.GenBuffers(1, &elementsHandle)
+	log.Println("elementsHandle =", elementsHandle)
 
-	var points = []float32{
-		-0.5, 0.0, 0.0, 1.0,
-		0.5, 0.0, 0.0, 1.0,
-		0.0, 0.5, 0.0, 1.0,
-	}
-	// gl.BufferData(gl.ARRAY_BUFFER, int(unsafe.Sizeof(points)), unsafe.Pointer(&points), gl.STATIC_DRAW)
+	// gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
 
-	log.Println("sizeof(points) =", unsafe.Sizeof(points))
-	gl.BufferData(gl.ARRAY_BUFFER, 4*3*4, gl.Void(&points[0]), gl.STATIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	// var points = []float32{
+	// 	-0.5, 0.0, 0.0, 1.0,
+	// 	0.5, 0.0, 0.0, 1.0,
+	// 	0.0, 0.5, 0.0, 1.0,
+	// }
+	// // gl.BufferData(gl.ARRAY_BUFFER, int(unsafe.Sizeof(points)), unsafe.Pointer(&points), gl.STATIC_DRAW)
 
-	gl.UseProgram(shaderHandle)
-	gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
+	// log.Println("sizeof(points) =", unsafe.Sizeof(points))
+	// gl.BufferData(gl.ARRAY_BUFFER, 4*3*4, gl.Void(&points[0]), gl.STATIC_DRAW)
+	// gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
-	// var x T
-	// var offs = unsafe.Offsetof(x.X)
-	// log.Println("offs", offs)
+	gl.UseProgram(shader.Handle)
 	// var ptr interface{} = gl.Void(uintptr(0))
 	// log.Println("ptr", reflect.ValueOf(ptr).Pointer(), unsafe.Pointer(reflect.ValueOf(ptr).Pointer()))
 	// gl.VertexAttribPointer(vertexLocation, 4, gl.FLOAT, false, 0, ptr)
-	gl.EnableVertexAttribArray(vertexLocation)
-	gl.VertexAttribPointer(vertexLocation, 4, gl.FLOAT, false, 0, unsafe.Pointer(uintptr(0)))
+	// gl.EnableVertexAttribArray(shader.Attributes.Position)
+	// gl.VertexAttribPointer(shader.Attributes.Position, 4, gl.FLOAT, false, 0, unsafe.Pointer(uintptr(0)))
+
+	image := io.Fonts().TextureDataAlpha8()
+
+	var fontTexture uint32
+	// Upload texture to graphics system
+	gl.GenTextures(1, &fontTexture)
+	gl.BindTexture(gl.TEXTURE_2D, fontTexture)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	// gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, gl.Sizei(image.Width), gl.Sizei(image.Height),
+		0, gl.ALPHA, gl.UNSIGNED_BYTE, gl.Void(image.Pixels))
+
+	log.Println("texture id =", fontTexture)
+	// Store our identifier
+	io.Fonts().SetTextureID(imgui.TextureID(fontTexture))
+	gl.BindTexture(gl.TEXTURE_2D, 0)
 
 	gl.ClearColor(0, 0, 0, 0)
 	return
 }
 
-func paint(verticesVBO uint32) {
+func paint(verticesVBO, elementsHandle uint32, shader *ShaderProps) {
 	// gl.Viewport(0, 0, 256, 64)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
+	// gl.Enable(gl.SCISSOR_TEST)
+	// gl.Scissor(120, 0, gl.Sizei(256-120), gl.Sizei(64))
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
-	gl.DrawArrays(gl.TRIANGLES, 0, 3)
+	// gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
+	// gl.DrawArrays(gl.TRIANGLES, 0, 3)
+	drawData := imgui.RenderedDrawData()
+
+	// Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
+	gl.Enable(gl.BLEND)
+	gl.BlendEquation(gl.FUNC_ADD)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.CULL_FACE)
+	gl.Disable(gl.DEPTH_TEST)
+	gl.Enable(gl.SCISSOR_TEST)
+	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+
+	// Setup viewport, orthographic projection matrix
+	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
+	// DisplayMin is typically (0,0) for single viewport apps.
+	gl.Viewport(0, 0, gl.Sizei(256), gl.Sizei(64))
+	orthoProjection := [4][4]float32{
+		{2.0 / 256, 0.0, 0.0, 0.0},
+		{0.0, 2.0 / -64, 0.0, 0.0},
+		{0.0, 0.0, -1.0, 0.0},
+		{-1.0, 1.0, 0.0, 1.0},
+	}
+	gl.UseProgram(shader.Handle)
+	gl.Uniform1i(shader.Uniforms.Texture, 0)
+	gl.UniformMatrix4fv(shader.Uniforms.ProjMtx, gl.Sizei(1), false, &orthoProjection[0][0])
+	// gl.BindSampler(0, 0) // Rely on combined texture/sampler state.
+
+	gl.EnableVertexAttribArray(uint32(shader.Attributes.Position))
+	gl.EnableVertexAttribArray(uint32(shader.Attributes.UV))
+	gl.EnableVertexAttribArray(uint32(shader.Attributes.Color))
+
+	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := imgui.VertexBufferLayout()
+	gl.VertexAttribPointer(uint32(shader.Attributes.Position), 2, gl.FLOAT, false, gl.Sizei(vertexSize), unsafe.Pointer(uintptr(vertexOffsetPos)))
+	gl.VertexAttribPointer(uint32(shader.Attributes.UV), 2, gl.FLOAT, false, gl.Sizei(vertexSize), unsafe.Pointer(uintptr(vertexOffsetUv)))
+	gl.VertexAttribPointer(uint32(shader.Attributes.Color), 4, gl.UNSIGNED_BYTE, true, gl.Sizei(vertexSize), unsafe.Pointer(uintptr(vertexOffsetCol)))
+
+	indexSize := imgui.IndexBufferLayout()
+	drawType := gl.UNSIGNED_SHORT
+	const bytesPerUint32 = 4
+	if indexSize == bytesPerUint32 {
+		drawType = gl.UNSIGNED_INT
+	}
+
+	// Draw
+	for _, list := range drawData.CommandLists() {
+		var indexBufferOffset uintptr
+
+		vertexBuffer, vertexBufferSize := list.VertexBuffer()
+		gl.BindBuffer(gl.ARRAY_BUFFER, verticesVBO)
+		gl.BufferData(gl.ARRAY_BUFFER, gl.SizeiPtr(vertexBufferSize), gl.Void(vertexBuffer), gl.STREAM_DRAW)
+
+		indexBuffer, indexBufferSize := list.IndexBuffer()
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsHandle)
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, gl.SizeiPtr(indexBufferSize), gl.Void(indexBuffer), gl.STREAM_DRAW)
+
+		for _, cmd := range list.Commands() {
+			if cmd.HasUserCallback() {
+				cmd.CallUserCallback(list)
+			} else {
+				gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureID()))
+				clipRect := cmd.ClipRect()
+				gl.Scissor(int32(clipRect.X), int32(64)-int32(clipRect.W), gl.Sizei(clipRect.Z-clipRect.X), gl.Sizei(clipRect.W-clipRect.Y))
+				gl.DrawElements(gl.TRIANGLES, gl.Sizei(cmd.ElementCount()), gl.Enum(drawType), gl.Void(indexBufferOffset))
+			}
+			indexBufferOffset += uintptr(cmd.ElementCount() * indexSize)
+		}
+	}
+
 	gl.Flush()
 	gl.Finish()
 }
@@ -540,3 +671,71 @@ func paint(verticesVBO uint32) {
 // 	gl.GenBuffers(1, &renderer.vboHandle)
 // 	gl.GenBuffers(1, &renderer.elementsHandle)
 // }
+
+func setStyle() {
+
+	var style = imgui.CurrentStyle()
+	// style.WindowRounding = 5.3
+	// style.FrameRounding = 2.3
+	// style.ScrollbarRounding = 0
+
+	style.SetColor(imgui.StyleColorText, imgui.Vec4{X: 0.90, Y: 0.90, Z: 0.90, W: 0.90})
+	style.SetColor(imgui.StyleColorTextDisabled, imgui.Vec4{X: 0.60, Y: 0.60, Z: 0.60, W: 1.00})
+
+	style.SetColor(imgui.StyleColorWindowBg, imgui.Vec4{X: 0.0, Y: 0.0, Z: 0.0, W: 1.00})
+	style.SetColor(imgui.StyleColorChildBg, imgui.Vec4{X: 0.00, Y: 0.00, Z: 0.00, W: 0.00})
+	style.SetColor(imgui.StyleColorPopupBg, imgui.Vec4{X: 0.05, Y: 0.05, Z: 0.10, W: 0.85})
+
+	style.SetColor(imgui.StyleColorBorder, imgui.Vec4{X: 0.70, Y: 0.70, Z: 0.70, W: 0.65})
+	style.SetColor(imgui.StyleColorBorderShadow, imgui.Vec4{X: 0.00, Y: 0.00, Z: 0.00, W: 0.00})
+
+	style.SetColor(imgui.StyleColorFrameBg, imgui.Vec4{X: 0.00, Y: 0.00, Z: 0.00, W: 0.00})
+	style.SetColor(imgui.StyleColorFrameBgHovered, imgui.Vec4{X: 0.90, Y: 0.80, Z: 0.80, W: 0.40})
+	style.SetColor(imgui.StyleColorFrameBgActive, imgui.Vec4{X: 0.90, Y: 0.65, Z: 0.65, W: 0.45})
+
+	style.SetColor(imgui.StyleColorTitleBg, imgui.Vec4{X: 0.00, Y: 0.00, Z: 0.00, W: 1.00})
+	style.SetColor(imgui.StyleColorTitleBgCollapsed, imgui.Vec4{X: 0.40, Y: 0.40, Z: 0.80, W: 0.20})
+	style.SetColor(imgui.StyleColorTitleBgActive, imgui.Vec4{X: 0.00, Y: 0.00, Z: 0.00, W: 0.87})
+
+	style.SetColor(imgui.StyleColorMenuBarBg, imgui.Vec4{X: 0.01, Y: 0.01, Z: 0.02, W: 0.80})
+	style.SetColor(imgui.StyleColorScrollbarBg, imgui.Vec4{X: 0.20, Y: 0.25, Z: 0.30, W: 0.60})
+	style.SetColor(imgui.StyleColorScrollbarGrab, imgui.Vec4{X: 0.55, Y: 0.53, Z: 0.55, W: 0.51})
+	style.SetColor(imgui.StyleColorScrollbarGrabHovered, imgui.Vec4{X: 0.56, Y: 0.56, Z: 0.56, W: 1.00})
+	style.SetColor(imgui.StyleColorScrollbarGrabActive, imgui.Vec4{X: 0.56, Y: 0.56, Z: 0.56, W: 0.91})
+	// style.SetColor(imgui.StyleColorComboBg, imgui.Vec4{X:0.1,Y: 0.1,Z: 0.1,W: 0.99})
+	style.SetColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 0.90, Y: 0.90, Z: 0.90, W: 0.83})
+	style.SetColor(imgui.StyleColorSliderGrab, imgui.Vec4{X: 0.70, Y: 0.70, Z: 0.70, W: 0.62})
+	style.SetColor(imgui.StyleColorSliderGrabActive, imgui.Vec4{X: 1.00, Y: 1.00, Z: 1.00, W: 0.84})
+	style.SetColor(imgui.StyleColorButton, imgui.Vec4{X: 0.48, Y: 0.72, Z: 0.89, W: 0.49})
+	style.SetColor(imgui.StyleColorButtonHovered, imgui.Vec4{X: 0.50, Y: 0.69, Z: 0.99, W: 0.68})
+	style.SetColor(imgui.StyleColorButtonActive, imgui.Vec4{X: 0.80, Y: 0.50, Z: 0.50, W: 1.00})
+	style.SetColor(imgui.StyleColorHeader, imgui.Vec4{X: 0.30, Y: 0.69, Z: 1.00, W: 0.53})
+	style.SetColor(imgui.StyleColorHeaderHovered, imgui.Vec4{X: 0.44, Y: 0.61, Z: 0.86, W: 1.00})
+	style.SetColor(imgui.StyleColorHeaderActive, imgui.Vec4{X: 0.38, Y: 0.62, Z: 0.83, W: 1.00})
+	// style.SetColor(imgui.StyleColorColumn, imgui.Vec4{X:0.50,Y: 0.50,Z: 0.50,W: 1.00})
+	// style.SetColor(imgui.StyleColorColumnHovered, imgui.Vec4{X:0.70,Y: 0.60,Z: 0.60,W: 1.00})
+	// style.SetColor(imgui.StyleColorColumnActive, imgui.Vec4{X:0.90,Y: 0.70,Z: 0.70,W: 1.00})
+	style.SetColor(imgui.StyleColorResizeGrip, imgui.Vec4{X: 1.00, Y: 1.00, Z: 1.00, W: 0.00})
+	style.SetColor(imgui.StyleColorResizeGripHovered, imgui.Vec4{X: 1.00, Y: 1.00, Z: 1.00, W: 0.00})
+	style.SetColor(imgui.StyleColorResizeGripActive, imgui.Vec4{X: 1.00, Y: 1.00, Z: 1.00, W: 0.00})
+	// style.SetColor(imgui.StyleColorCloseButton, imgui.Vec4{X:0.50,Y: 0.50,Z: 0.90,W: 0.50})
+	// style.SetColor(imgui.StyleColorCloseButtonHovered, imgui.Vec4{X:0.70,Y: 0.70,Z: 0.90,W: 0.60})
+	// style.SetColor(imgui.StyleColorCloseButtonActive, imgui.Vec4{X:0.70,Y: 0.70,Z: 0.70,W: 1.00})
+	style.SetColor(imgui.StyleColorPlotLines, imgui.Vec4{X: 1.00, Y: 1.00, Z: 1.00, W: 1.00})
+	style.SetColor(imgui.StyleColorPlotLinesHovered, imgui.Vec4{X: 0.90, Y: 0.70, Z: 0.00, W: 1.00})
+	style.SetColor(imgui.StyleColorPlotHistogram, imgui.Vec4{X: 0.90, Y: 0.70, Z: 0.00, W: 1.00})
+	style.SetColor(imgui.StyleColorPlotHistogramHovered, imgui.Vec4{X: 1.00, Y: 0.60, Z: 0.00, W: 1.00})
+	style.SetColor(imgui.StyleColorTextSelectedBg, imgui.Vec4{X: 0.00, Y: 0.00, Z: 1.00, W: 0.35})
+	style.SetColor(imgui.StyleColorModalWindowDarkening, imgui.Vec4{X: 0.20, Y: 0.20, Z: 0.20, W: 0.35})
+
+	style.SetColor(imgui.StyleColorSliderGrab, imgui.Vec4{X: 0.70, Y: 0.70, Z: 0.70, W: 0.65})
+
+	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0.0)
+	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0.0)
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 0, Y: 0})
+	imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{X: 0, Y: 0})
+	// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{X: 0, Y: 0})
+	imgui.PushStyleVarFloat(imgui.StyleVarScrollbarRounding, 0.0)
+	imgui.PushStyleVarFloat(imgui.StyleVarScrollbarSize, 2.0)
+	// imgui.PushStyleVarFloat(imgui.StyleVarGrabMinSize, 0.0)
+}
